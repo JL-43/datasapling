@@ -1,0 +1,19 @@
+metadata:
+  enable: true
+  fields:
+    - created_at
+    - created_by
+    - modified_at
+    - modified_by
+
+datasets:
+  customers:
+    type: incremental
+    frequency: daily
+    fields:
+      - name: customer_id
+        type: uuid
+      - name: full_name
+        type: name
+      - name: email
+        type: email
