@@ -7,7 +7,8 @@
 - Include optional metadata fields (e.g., `created_by`, `modified_by`) with the ability to enable or disable them.
 - Manipulate data using SQL, preferring DuckDB or SparkSQL dialects.
 - Simulate real pipeline data sources. Some sources giving data meant for incremental load, some sources giving data for full load. With the ability to target where these data sources are dropped into.
-- Simulate time of generation for the data sources. Simulating data source groups giving their data sources at different times.
+- Simulate data endpoints in various formats (simple CSV/TSV, mock API, mock database connection). 
+  - For the first draft, focus on creating a CSV/TSV endpoint.
 
 ### Objective 1: Set Up a Portable Local Environment
 
@@ -192,113 +193,26 @@ print(result)
 
 ---
 
-### Objective 5: Simulate Real Pipeline Triggers
+### Objective 5: Simulate Data Endpoints in Various Formats
 
-We can simulate incremental and full loads by adding command-line arguments to our script.
+Instead of directly creating source tables in DuckDB, we'll simulate data endpoints by generating data in formats like CSV/TSV files, mock APIs, or mock database connections. For the first draft, we'll focus on creating CSV/TSV endpoints.
+
+This approach more closely aligns with real-world scenarios where data is received from various sources before being loaded into a database.
 
 #### Steps:
+1. Modify the Data Generation Script to Output CSV/TSV Files
+- Update main.py to save the generated data as CSV or TSV files instead of loading it directly into DuckDB.
+- Add command-line arguments to specify the output format and directory.
+- Organize the output files to simulate different data sources and load types (full and incremental).
 
-1. **Modify `main.py` to Accept Load Type:**
+2. Simulate Incremental and Full Loads
+- Implement logic to generate datasets representing both full and incremental loads.
+- Output files will be named and stored in a way that reflects their load type.
 
-```python
-def main(config_file, load_type):
-    # existing code...
-    if load_type == 'full':
-        # Recreate tables
-        pass
-    elif load_type == 'incremental':
-        # Append to existing tables
-        pass
-    else:
-        print("Invalid load type. Use 'full' or 'incremental'.")
-```
+3. Update the Dockerfile
+- Adjust the Dockerfile to ensure that the generated data files are accessible outside the Docker container.
+- Map a volume for the output directory.
 
-2. **Update Argument Parser:**
-
-```python
-parser.add_argument('--load-type', type=str, choices=['full', 'incremental'], default='full', help='Type of data load.')
-```
-
-3. **Implement Logic for Full and Incremental Loads:**
-
-- **Full Load:**
-  - Drop and recreate tables.
-- **Incremental Load:**
-  - Append new records to existing tables.
-
-#### Example Implementation:
-
-```python
-def main(config_file, load_type):
-    # existing code...
-    for table_name, table_config in tables.items():
-        df = generate_data(table_config, metadata_options)
-        if load_type == 'full':
-            conn.execute(f"CREATE OR REPLACE TABLE {table_name} AS SELECT * FROM df")
-            print(f"Table {table_name} fully reloaded with {len(df)} rows.")
-        elif load_type == 'incremental':
-            conn.execute(f"INSERT INTO {table_name} SELECT * FROM df")
-            print(f"Table {table_name} incrementally loaded with {len(df)} new rows.")
-```
-
----
-
-### Putting It All Together
-
-Now, you have a Dockerized application that:
-
-- Generates fake data using Faker based on a YAML configuration.
-- Includes optional metadata fields.
-- Uses DuckDB to manipulate data with SQL.
-- Simulates incremental and full load patterns.
-- Is portable and can be deployed on any device with Docker installed.
-
-#### Running the Application
-
-1. **Build the Docker Image:**
-
-```bash
-docker build -t fake-data-generator .
-```
-
-2. **Run the Docker Container:**
-
-- **Full Load:**
-
-```bash
-docker run fake-data-generator --load-type full
-```
-
-- **Incremental Load:**
-
-```bash
-docker run fake-data-generator --load-type incremental
-```
-
-#### Deploying on Other Devices:
-
-- Copy your project directory to the new device.
-- Ensure Docker is installed.
-- Build and run the Docker image as above.
-
----
-
-### Next Steps and Customizations
-
-1. **Extend the Configuration:**
-
-   - Add more tables and columns in `config.yaml`.
-   - Define relationships between tables (e.g., foreign keys).
-
-2. **Use SparkSQL Instead of DuckDB:**
-
-   - Replace DuckDB with PySpark if you prefer SparkSQL dialect.
-   - Update `requirements.txt` and `main.py` accordingly.
-
-3. **Persist Data:**
-
-   - Modify the script to save dataframes to Parquet, CSV, or a database.
-
-4. **Advanced Pipeline Simulation:**
-
-   - Integrate tools like Apache Airflow or Prefect for more complex pipeline simulations.
+4. Process the Data
+- Create a separate script to load the generated CSV/TSV files into DuckDB or another database.
+- This simulates the data ingestion step of your pipeline.

@@ -1,19 +1,51 @@
-metadata:
-  enable: true
-  fields:
-    - created_at
-    - created_by
-    - modified_at
-    - modified_by
+global:
+  metadata:
+    enable: true
+    fields:
+      - created_at
+      - created_by
+      - modified_at
+      - modified_by
+  output:
+    directory: "output/"
+    format: "csv"  # Default format for all datasets
 
 datasets:
   customers:
     type: incremental
     frequency: daily
+    rows: 100  # Number of rows specific to this dataset
+    metadata:
+      enable: true
+      fields:
+        - created_at
+        - created_by
+    output:
+      directory: "output/customers/"
+      format: "csv"
     fields:
       - name: customer_id
-        type: uuid
+        type: uuid4
       - name: full_name
         type: name
       - name: email
         type: email
+
+  orders:
+    type: full
+    frequency: weekly
+    rows: 50
+    metadata:
+      enable: false  # Disable metadata for this dataset
+    output:
+      directory: "output/orders/"
+      format: "tsv"
+    fields:
+      - name: order_id
+        type: uuid4
+      - name: customer_id
+        type: uuid4
+      - name: product
+        type: word
+      - name: quantity
+        type: random_int
